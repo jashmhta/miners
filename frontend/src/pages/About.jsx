@@ -30,12 +30,6 @@ export default function About(){
             </Reveal>
           ))}
         </div>
-        <Reveal delay={300} className="mt-12">
-          <div className="bg-black border-4 border-orange-500 p-6">
-            <h3 className="font-black text-xl mb-2">Contact</h3>
-            <p className="text-gray-300 font-bold">Looking to collaborate or request a recovery? Reach us at team@bruteosaur.example (placeholder) and we will follow up with secure onboarding.</p>
-          </div>
-        </Reveal>
       </section>
     </div>
   )

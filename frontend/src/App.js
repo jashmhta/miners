@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import axios from "axios";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
@@ -14,15 +14,10 @@ import Technologies from "./pages/Technologies";
 import Success from "./pages/Success";
 import Testimonials from "./pages/Testimonials";
 import About from "./pages/About";
+import Demo from "./pages/Demo";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
-
-function DemoRedirect() {
-  const navigate = useNavigate();
-  useEffect(() => { navigate("/simulate", { replace: true }); }, [navigate]);
-  return null;
-}
 
 const HomePage = Home;
 const CompatibilityPage = Compatibility;
@@ -46,7 +41,7 @@ function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/demo" element={<DemoRedirect />} />
+            <Route path="/demo" element={<Demo />} />
             <Route path="/technologies" element={<Technologies />} />
             <Route path="/compatibility" element={<CompatibilityPage />} />
             <Route path="/success" element={<Success />} />
