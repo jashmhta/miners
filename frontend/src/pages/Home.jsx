@@ -128,7 +128,7 @@ export default function Home() {
               WATCH <span className="text-orange-500">BRUTEOSAUR</span> IN ACTION
             </h2>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto font-bold">
-              See our advanced brute-force engine discover wallet mnemonics in real-time. This simulation shows actual mining performance.
+              See our advanced brute-force engine discover wallet mnemonics in real-time. This demonstration mirrors real-time performance characteristics.
             </p>
           </div>
           <div className="max-w-5xl mx-auto">
