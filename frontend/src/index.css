@@ -16,7 +16,27 @@ code {
         monospace;
 }
 
+/* Custom animations */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.type-cursor::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 1em;
+  margin-left: 2px;
+  background: #f97316; /* orange-500 */
+  animation: blink 1s step-end infinite;
+}
 
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+.float-soft { animation: float 3s ease-in-out infinite; }
 
 @layer base {
   :root {
@@ -74,13 +94,7 @@ code {
     }
 }
 
-
-
 @layer base {
-  * {
-    @apply border-border;
-    }
-  body {
-    @apply bg-background text-foreground;
-    }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import Reveal from "../components/Reveal";
-import { Cpu, Shield, Zap, Gauge, Server } from "lucide-react";
+import { Cpu, Shield, Zap, Gauge, Server, Network, Wrench } from "lucide-react";
 
 const tech = [
   { icon: Cpu, title: "GPU Acceleration", desc: "Optimized CUDA / Metal kernels driving 1.25M+ combos/sec" },
@@ -8,6 +8,8 @@ const tech = [
   { icon: Zap, title: "Parallelism", desc: "Multi-threaded brute-force with adaptive batching" },
   { icon: Server, title: "Distributed Nodes", desc: "Scale out across rigs with resilient job queues" },
   { icon: Gauge, title: "Telemetry", desc: "Real-time metrics and auto-tuning for best hash rate" },
+  { icon: Network, title: "Cross-Chain", desc: "Wallet formats across BTC/ETH/SOL and EVM-compatible chains" },
+  { icon: Wrench, title: "Plugin SDK", desc: "Extend recoverers via lightweight WASM plugins" },
 ];
 
 export default function Technologies() {
@@ -31,6 +33,12 @@ export default function Technologies() {
             </Reveal>
           ))}
         </div>
+        <Reveal delay={400} className="mt-12">
+          <div className="bg-black border-4 border-orange-500 p-6 font-mono text-sm overflow-x-auto">
+            <div className="text-gray-300">$ bfgminer -o stratum+tcp://pool:3333 -O user:pass --gpu-threads 4 --intensity 19</div>
+            <div className="text-green-400">[ok] engine online • telemetry streaming</div>
+          </div>
+        </Reveal>
       </section>
     </div>
   );
