@@ -1,23 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { stats, features } from "../mock";
 import { Cpu, Zap, Shield, TrendingUp, Download, ArrowRight } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
 import Reveal from "../components/Reveal";
 
 const ICONS = { Cpu, Zap, Shield, TrendingUp };
-const HERO_VIDEO = "https://customer-assets.emergentagent.com/job_bruteosaur-copy/artifacts/jqvoadui_VID_20250616_202438_764.mp4";
+const HERO_VIDEO = "/assets/hero.mp4"; // moved to local assets
 
 export default function Home() {
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [lines, setLines] = useState([]);
-  const [running, setRunning] = useState(false);
-  const timerRef = useRef(null);
-
-  const addLine = (text) => setLines((prev) => [...prev, text].slice(-300));
-
-  const startDemo = () => navigate("/simulate");
 
   const FeatureCard = ({ icon, title, description }) => {
     const Icon = ICONS[icon] || Cpu;
@@ -34,7 +25,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* HERO */}
       <section className="relative min-h-[88vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <video autoPlay loop playsInline muted className="w-full h-full object-cover opacity-20">
@@ -52,7 +42,7 @@ export default function Home() {
           </div>
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <button
-              onClick={startDemo}
+              onClick={() => navigate("/simulate")}
               className="bg-orange-500 text-black px-8 py-4 border-4 border-black font-black text-lg hover:bg-orange-400 transform hover:scale-105 transition-colors duration-200"
             >
               START DEMO <ArrowRight className="inline ml-2 h-5 w-5" />
@@ -67,7 +57,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* STATS */}
       <section id="success" className="py-20 bg-gray-900 border-y-4 border-orange-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -83,7 +72,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURES / TECHNOLOGIES */}
       <section id="features" className="py-20 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -101,7 +89,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
       <section className="py-20 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal className="text-center mb-10">
@@ -127,7 +114,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="py-20 bg-orange-500 text-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl md:text-5xl font-black mb-6">READY TO START MINING?</h2>
