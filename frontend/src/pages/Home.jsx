@@ -1,14 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { stats, features } from "../mock";
 import { Cpu, Zap, Shield, TrendingUp, Download, ArrowRight } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 
 const ICONS = { Cpu, Zap, Shield, TrendingUp };
+const HERO_VIDEO = "https://customer-assets.emergentagent.com/job_bruteosaur-copy/artifacts/jqvoadui_VID_20250616_202438_764.mp4";
 
 export default function Home() {
   const { toast } = useToast();
-  // Terminal demo simulation
+  const navigate = useNavigate();
+  // Terminal demo simulation (kept for Home section)
   const [lines, setLines] = useState([]);
   const [running, setRunning] = useState(false);
   const timerRef = useRef(null);
@@ -73,7 +75,7 @@ export default function Home() {
       <section className="relative min-h-[88vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <video autoPlay loop playsInline muted className="w-full h-full object-cover opacity-20">
-            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+            <source src={HERO_VIDEO} type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/60" />
         </div>
@@ -96,17 +98,17 @@ export default function Home() {
               WATCH DEMO <ArrowRight className="inline ml-2 h-5 w-5" />
             </Link>
             <button
-              onClick={() => toast({ title: "Downloading...", description: "BFGMiner download initialized (mock)" })}
+              onClick={() => navigate("/simulate")}
               className="bg-gray-800 text-white px-8 py-4 border-4 border-gray-600 font-black text-lg hover:bg-gray-700 flex items-center"
             >
-              <Download className="mr-2 h-5 w-5" /> DOWNLOAD BFGMINER
+              <Download className="mr-2 h-5 w-5" /> DOWNLOAD NOW
             </button>
           </div>
         </div>
       </section>
 
       {/* STATS */}
-      <section className="py-20 bg-gray-900 border-y-4 border-orange-500">
+      <section id="success" className="py-20 bg-gray-900 border-y-4 border-orange-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((s) => (
@@ -183,8 +185,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section className="py-20 bg-gray-900">
+      {/* FEATURES / TECHNOLOGIES */}
+      <section id="features" className="py-20 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-6">

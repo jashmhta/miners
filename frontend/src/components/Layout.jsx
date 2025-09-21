@@ -2,9 +2,24 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "../lib/utils";
 
-const NavLink = ({ to, children }) => {
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_bruteosaur-copy/artifacts/xt1huvju_1758124410061.jpg";
+
+const NavLink = ({ to, children, anchor }) => {
   const { pathname } = useLocation();
   const active = pathname === to;
+  if (anchor) {
+    return (
+      <a
+        href={to}
+        className={cn(
+          "px-3 py-2 font-black text-sm tracking-wide border-b-[3px]",
+          "text-gray-300 border-transparent hover:text-white hover:border-gray-600"
+        )}
+      >
+        {children}
+      </a>
+    );
+  }
   return (
     <Link
       to={to}
@@ -23,15 +38,19 @@ export default function Layout({ children }) {
     <div className="min-h-screen bg-black text-white">
       <header className="fixed top-0 w-full z-40 bg-black/80 backdrop-blur border-b-4 border-orange-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="font-black text-2xl tracking-tighter">
-            <span className="text-white">BRUTE</span>
-            <span className="text-orange-500">OSAUR</span>
+          <Link to="/" className="flex items-center gap-3">
+            <img src={LOGO_URL} alt="Bruteosaur" className="w-9 h-9 rounded-sm object-cover"/>
+            <div className="font-black text-2xl tracking-tighter">
+              <span className="text-white">BRUTE</span>
+              <span className="text-orange-500">OSAUR</span>
+            </div>
           </Link>
           <nav className="flex items-center space-x-2">
             <NavLink to="/">Home</NavLink>
             <NavLink to="/demo">Demo</NavLink>
             <NavLink to="/compatibility">Compatibility</NavLink>
-            <NavLink to="/dashboard">Dashboard</NavLink>
+            <NavLink to="/#features" anchor>Technologies</NavLink>
+            <NavLink to="/#success" anchor>Success Rate</NavLink>
             <NavLink to="/about">About</NavLink>
           </nav>
         </div>
@@ -40,12 +59,12 @@ export default function Layout({ children }) {
       <footer className="border-t-4 border-gray-800 py-8 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-gray-400 text-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            © {new Date().getFullYear()} Bruteosaur. All rights reserved.
+            © {new Date().getFullYear()} Bruteosaur. Licensed for demonstration; replace with your licensing details.
           </div>
           <div className="flex items-center gap-6 font-bold">
             <Link to="/about" className="hover:text-white">About</Link>
             <Link to="/compatibility" className="hover:text-white">Compatibility</Link>
-            <a href="#top" className="hover:text-white">Back to top</a>
+            <a href="/#features" className="hover:text-white">Technologies</a>
           </div>
         </div>
       </footer>

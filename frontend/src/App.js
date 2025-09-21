@@ -1,11 +1,15 @@
 import React, { useEffect } from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import axios from "axios";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Compatibility from "./pages/Compatibility";
 import { Toaster } from "./components/ui/toaster";
+import Simulate from "./pages/Simulate";
+import Auth from "./pages/Auth";
+import ConnectWallet from "./pages/ConnectWallet";
+import DownloadGuide from "./pages/DownloadGuide";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -21,7 +25,7 @@ function Demo() {
         <div className="aspect-video border-4 border-orange-500">
           <iframe
             className="w-full h-full"
-            src="https://www.youtube.com/embed/YE7VzlLtp-4?rel=0"
+            src="https://www.youtube.com/embed/DgJRoQcz6RQ?rel=0"
             title="Bruteosaur Demo"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
@@ -69,8 +73,9 @@ function About() {
         <p className="text-gray-300 leading-relaxed font-bold">
           Bruteosaur is a professional-grade crypto mining and wallet recovery platform. This is a pixel-close replica with mocked data and UI interactions for demonstration.
         </p>
-        <div className="mt-6">
-          <Link to="/compatibility" className="text-orange-500 font-black underline">Check compatibility</Link>
+        <div className="mt-6 space-x-4">
+          <a href="/#features" className="text-orange-500 font-black underline">Technologies</a>
+          <a href="/#success" className="text-orange-500 font-black underline">Success Rate</a>
         </div>
       </section>
     </div>
@@ -82,7 +87,6 @@ const CompatibilityPage = Compatibility;
 
 function App() {
   useEffect(() => {
-    // Simple health check to backend using configured env URL only
     const helloWorldApi = async () => {
       try {
         const response = await axios.get(`${API}/`);
@@ -104,6 +108,10 @@ function App() {
             <Route path="/compatibility" element={<CompatibilityPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/about" element={<About />} />
+            <Route path="/simulate" element={<Simulate />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/connect-wallet" element={<ConnectWallet />} />
+            <Route path="/download-guide" element={<DownloadGuide />} />
           </Routes>
         </Layout>
         <Toaster />
