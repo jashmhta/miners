@@ -4,7 +4,7 @@ import { cn } from "../lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { Menu } from "lucide-react";
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_bruteosaur-copy/artifacts/xt1huvju_1758124410061.jpg";
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_bruteosaur-copy/artifacts/2xlf2dip_1758496554596.jpg";
 
 const NavLink = ({ to, children, onClick }) => {
   const { pathname } = useLocation();
@@ -85,7 +85,7 @@ export default function Layout({ children }) {
             © {new Date().getFullYear()} Bruteosaur. All rights reserved.
           </div>
           <div className="flex items-center gap-6 font-bold">
-            <Link to="/about" className="hover:text-white">About</Link>
+            <Link to="/simulate" className="hover:text-white">Start Mining Now</Link>
             <Link to="/compatibility" className="hover:text-white">Compatibility</Link>
             <Link to="/technologies" className="hover:text-white">Technologies</Link>
           </div>
