@@ -48,7 +48,7 @@ export default function Layout({ children }) {
       <footer className="border-t-4 border-gray-800 py-8 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-gray-400 text-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            © {new Date().getFullYear()} Bruteosaur. Licensed for demonstration; replace with your licensing details.
+            © {new Date().getFullYear()} Bruteosaur. All rights reserved.
           </div>
           <div className="flex items-center gap-6 font-bold">
             <Link to="/about" className="hover:text-white">About</Link>
