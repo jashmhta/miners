@@ -10,6 +10,9 @@ import Simulate from "./pages/Simulate";
 import Auth from "./pages/Auth";
 import ConnectWallet from "./pages/ConnectWallet";
 import DownloadGuide from "./pages/DownloadGuide";
+import Technologies from "./pages/Technologies";
+import Success from "./pages/Success";
+import Testimonials from "./pages/Testimonials";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -37,46 +40,14 @@ function Demo() {
   );
 }
 
-function Dashboard() {
-  return (
-    <div className="min-h-[70vh] bg-black text-white">
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl font-black mb-6">Dashboard (Mock)</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gray-900 border-4 border-gray-700 p-6">
-            <div className="text-gray-400 font-bold">HASH RATE</div>
-            <div className="text-3xl font-black text-orange-500">1.25M/sec</div>
-          </div>
-          <div className="bg-gray-900 border-4 border-gray-700 p-6">
-            <div className="text-gray-400 font-bold">SUCCESS RATE</div>
-            <div className="text-3xl font-black text-green-500">94.7%</div>
-          </div>
-          <div className="bg-gray-900 border-4 border-gray-700 p-6">
-            <div className="text-gray-400 font-bold">AVG TIME</div>
-            <div className="text-3xl font-black text-blue-400">7.3s</div>
-          </div>
-        </div>
-        <div className="mt-8 flex gap-4">
-          <button className="bg-orange-500 text-black px-6 py-3 border-4 border-black font-black hover:bg-orange-400">Start Mining (Mock)</button>
-          <button className="bg-gray-700 text-white px-6 py-3 border-4 border-gray-600 font-black hover:bg-gray-600">Stop</button>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function About() {
   return (
     <div className="min-h-[70vh] bg-black text-white">
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl md:text-5xl font-black mb-6">About Bruteosaur</h1>
         <p className="text-gray-300 leading-relaxed font-bold">
-          Bruteosaur is a professional-grade crypto mining and wallet recovery platform. This is a pixel-close replica with mocked data and UI interactions for demonstration.
+          Bruteosaur is a professional-grade crypto mining and wallet recovery platform. This replica demonstrates the intended UX and flows.
         </p>
-        <div className="mt-6 space-x-4">
-          <a href="/#features" className="text-orange-500 font-black underline">Technologies</a>
-          <a href="/#success" className="text-orange-500 font-black underline">Success Rate</a>
-        </div>
       </section>
     </div>
   );
@@ -105,8 +76,10 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/demo" element={<Demo />} />
+            <Route path="/technologies" element={<Technologies />} />
             <Route path="/compatibility" element={<CompatibilityPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/success" element={<Success />} />
+            <Route path="/testimonials" element={<Testimonials />} />
             <Route path="/about" element={<About />} />
             <Route path="/simulate" element={<Simulate />} />
             <Route path="/auth" element={<Auth />} />
