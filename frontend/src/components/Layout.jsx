@@ -4,28 +4,16 @@ import { cn } from "../lib/utils";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_bruteosaur-copy/artifacts/xt1huvju_1758124410061.jpg";
 
-const NavLink = ({ to, children, anchor }) => {
+const NavLink = ({ to, children }) => {
   const { pathname } = useLocation();
   const active = pathname === to;
-  if (anchor) {
-    return (
-      <a
-        href={to}
-        className={cn(
-          "px-3 py-2 font-black text-sm tracking-wide border-b-[3px]",
-          "text-gray-300 border-transparent hover:text-white hover:border-gray-600"
-        )}
-      >
-        {children}
-      </a>
-    );
-  }
   return (
     <Link
       to={to}
       className={cn(
-        "px-3 py-2 font-black text-sm tracking-wide border-b-[3px]",
-        active ? "text-orange-500 border-orange-500" : "text-gray-300 border-transparent hover:text-white hover:border-gray-600"
+        "px-3 py-2 font-black text-sm tracking-wide border-b-[3px] rounded -mb-[3px]",
+        "transition-colors hover:text-white",
+        active ? "text-orange-500 border-orange-500" : "text-gray-300 border-transparent hover:border-gray-600"
       )}
     >
       {children}
@@ -36,7 +24,7 @@ const NavLink = ({ to, children, anchor }) => {
 export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="fixed top-0 w-full z-40 bg-black/80 backdrop-blur border-b-4 border-orange-500">
+      <header className="fixed top-0 w-full z-40 bg-black/85 backdrop-blur border-b-4 border-orange-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <img src={LOGO_URL} alt="Bruteosaur" className="w-9 h-9 rounded-sm object-cover"/>
@@ -48,9 +36,10 @@ export default function Layout({ children }) {
           <nav className="flex items-center space-x-2">
             <NavLink to="/">Home</NavLink>
             <NavLink to="/demo">Demo</NavLink>
+            <NavLink to="/technologies">Technologies</NavLink>
             <NavLink to="/compatibility">Compatibility</NavLink>
-            <NavLink to="/#features" anchor>Technologies</NavLink>
-            <NavLink to="/#success" anchor>Success Rate</NavLink>
+            <NavLink to="/success">Success Rate</NavLink>
+            <NavLink to="/testimonials">Testimonials</NavLink>
             <NavLink to="/about">About</NavLink>
           </nav>
         </div>
@@ -64,7 +53,7 @@ export default function Layout({ children }) {
           <div className="flex items-center gap-6 font-bold">
             <Link to="/about" className="hover:text-white">About</Link>
             <Link to="/compatibility" className="hover:text-white">Compatibility</Link>
-            <a href="/#features" className="hover:text-white">Technologies</a>
+            <Link to="/technologies" className="hover:text-white">Technologies</Link>
           </div>
         </div>
       </footer>
