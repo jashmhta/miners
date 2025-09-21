@@ -27,7 +27,7 @@ export default function DownloadGuide() {
             <li>Run the mining command from terminal: <span className="text-white">./bfgminer -o stratum+tcp://pool:3333 -O user:pass</span></li>
             <li>Monitor the hash rate and logs.</li>
           </ol>
-          <p className="text-xs text-gray-500 mt-4">Note: For demo purposes, no real mining is performed.</p>
+          <p className="text-xs text-gray-500 mt-4">Refer to the official BFGMiner docs for OS-specific flags and driver notes.</p>
         </div>
       </div>
     </div>
