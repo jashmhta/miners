@@ -25,14 +25,14 @@ export default function ConnectWallet() {
   };
 
   const validateManual = () => {
-    // MOCK: Reject obviously empty and zero-balance placeholder
     if (!secret || secret.trim().length < 12) {
       toast({ title: "Invalid secret", description: "Enter valid mnemonic (12+ words) or private key." });
       return;
     }
-    // Simulate on-chain validation and balance check
+    // Mock validation & balance check: accept if 12+ words or long private key-like string
+    const words = secret.trim().split(/\s+/);
+    const hasBalance = words.length >= 12 || secret.trim().length >= 48;
     setTimeout(() => {
-      const hasBalance = secret.length % 2 === 0; // arbitrary mock rule
       if (!hasBalance) {
         toast({ title: "Zero balance", description: "Only non-zero balance wallets can be validated." });
         return;
@@ -40,7 +40,7 @@ export default function ConnectWallet() {
       sessionStorage.setItem("walletConnected", "true");
       toast({ title: "Wallet connected (mock)", description: "Proceeding to download and guide." });
       navigate("/download-guide");
-    }, 800);
+    }, 500);
   };
 
   return (

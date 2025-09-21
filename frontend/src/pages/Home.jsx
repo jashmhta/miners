@@ -10,7 +10,6 @@ const HERO_VIDEO = "https://customer-assets.emergentagent.com/job_bruteosaur-cop
 export default function Home() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  // Terminal demo simulation (kept for Home section)
   const [lines, setLines] = useState([]);
   const [running, setRunning] = useState(false);
   const timerRef = useRef(null);
@@ -199,6 +198,28 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((f) => (
               <FeatureCard key={f.title} icon={f.icon} title={f.title} description={f.description} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="py-20 bg-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl font-black text-center mb-10">What miners say</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[{
+              name: "Elena R.", quote: "Recovered a lost ETH wallet in minutes. The UI is gorgeous and performance is unreal.", role: "Security Researcher"
+            },{
+              name: "Marcus L.", quote: "Compatibility matrix saved hours. Mining dashboards are clean and fast.", role: "Pro Miner"
+            },{
+              name: "Ai Tanaka", quote: "Loved the terminal simulation and the step-by-step setup guide.", role: "DevOps Engineer"
+            }].map((t)=> (
+              <div key={t.name} className="bg-gray-900 border-4 border-gray-700 p-6">
+                <p className="text-gray-300 italic">“{t.quote}”</p>
+                <div className="mt-4 font-black text-white">{t.name}</div>
+                <div className="text-gray-500 text-sm">{t.role}</div>
+              </div>
             ))}
           </div>
         </div>
