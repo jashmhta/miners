@@ -1,6 +1,6 @@
 import React from "react";
 import { wallets, hardwareTiers, osSupport, browserSupport, quickSetup } from "../mock";
-import { Monitor, Settings, Download } from "lucide-react";
+import { Monitor, Settings, Download, Wallet, Link as LinkIcon, WalletMinimal, Shield, Lock, LockKeyhole, Ghost, Palette } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 
 const Badge = ({ color = "green", children }) => {
@@ -12,6 +12,23 @@ const Badge = ({ color = "green", children }) => {
   return (
     <span className={`px-3 py-1 border-2 border-black font-black text-sm ${palette[color]}`}>{children}</span>
   );
+};
+
+const ICONS = { Wallet, Link: LinkIcon, WalletMinimal, Shield, Lock, LockKeyhole, Ghost, Palette };
+
+const colorClasses = (c) => {
+  switch (c) {
+    case "red":
+      return { border: "border-red-500", text: "text-red-500" };
+    case "orange":
+      return { border: "border-orange-500", text: "text-orange-500" };
+    case "green":
+      return { border: "border-green-500", text: "text-green-500" };
+    case "yellow":
+      return { border: "border-yellow-500", text: "text-yellow-500" };
+    default:
+      return { border: "border-gray-600", text: "text-gray-400" };
+  }
 };
 
 export default function Compatibility() {
@@ -46,16 +63,18 @@ export default function Compatibility() {
         <div className="mb-16">
           <h2 className="text-4xl font-black mb-8 text-center">SUPPORTED WALLETS</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {wallets.map((w) => (
-              <div key={w.name} className="bg-gray-800 border-[3px] border-gray-600 p-6 text-center">
-                <div className="flex items-center justify-center mb-4">
-                  {/* Using lucide icons to avoid emojis */}
-                  <w.icon className="h-10 w-10 text-orange-500" />
+            {wallets.map((w) => {
+              const Icon = ICONS[w.icon] || Wallet;
+              return (
+                <div key={w.name} className="bg-gray-800 border-[3px] border-gray-600 p-6 text-center">
+                  <div className="flex items-center justify-center mb-4">
+                    <Icon className="h-10 w-10 text-orange-500" />
+                  </div>
+                  <h3 className="font-black text-white mb-2">{w.name}</h3>
+                  <Badge color={w.color}>{w.status}</Badge>
                 </div>
-                <h3 className="font-black text-white mb-2">{w.name}</h3>
-                <Badge color={w.color}>{w.status}</Badge>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -63,19 +82,22 @@ export default function Compatibility() {
         <div className="mb-16">
           <h2 className="text-4xl font-black mb-8 text-center">HARDWARE REQUIREMENTS</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {hardwareTiers.map((t) => (
-              <div key={t.label} className={`bg-gray-800 border-[3px] p-6 border-${t.color}-500`}>
-                <h3 className={`text-2xl font-black mb-6 text-${t.color}-500 text-center`}>{t.label}</h3>
-                <div className="space-y-4">
-                  {t.spec.map((s) => (
-                    <div key={s.k} className="flex items-center justify-between">
-                      <span className="text-gray-400 font-bold">{s.k}:</span>
-                      <span className="text-white font-bold">{s.v}</span>
-                    </div>
-                  ))}
+            {hardwareTiers.map((t) => {
+              const cc = colorClasses(t.color);
+              return (
+                <div key={t.label} className={`bg-gray-800 border-[3px] p-6 ${cc.border}`}>
+                  <h3 className={`text-2xl font-black mb-6 ${cc.text} text-center`}>{t.label}</h3>
+                  <div className="space-y-4">
+                    {t.spec.map((s) => (
+                      <div key={s.k} className="flex items-center justify-between">
+                        <span className="text-gray-400 font-bold">{s.k}:</span>
+                        <span className="text-white font-bold">{s.v}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

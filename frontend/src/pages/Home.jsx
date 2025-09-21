@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { stats, features } from "../mock";
 import { Cpu, Zap, Shield, TrendingUp, Download, ArrowRight } from "lucide-react";
@@ -158,7 +158,7 @@ export default function Home() {
               <div className="h-96 overflow-y-auto pr-2">
                 <pre className="whitespace-pre-wrap text-gray-200">
                   {lines.map((l, i) => (
-                    &lt;div key={i}&gt;{l}&lt;/div&gt;
+                    <div key={i}>{l}</div>
                   ))}
                 </pre>
               </div>
@@ -196,7 +196,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((f) => (
-              &lt;FeatureCard key={f.title} icon={f.icon} title={f.title} description={f.description} /&gt;
+              <FeatureCard key={f.title} icon={f.icon} title={f.title} description={f.description} />
             ))}
           </div>
         </div>
