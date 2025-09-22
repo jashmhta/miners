@@ -176,7 +176,8 @@ async def login(req: UserLogin):
     if not user or not verify_password(req.password, user.get("password_hash", "")):
         raise HTTPException(status_code=401, detail="INVALID_CREDENTIALS")
     token = make_jwt(user["id"], user["role"])
-    resp = JSONResponse(UserPublic(**{k: user[k] for k in ["id", "username", "role", "created_at"]}).model_dump())
+    user_data = UserPublic(**{k: user[k] for k in ["id", "username", "role", "created_at"]})
+    resp = JSONResponse(user_data.model_dump(mode='json'))
     set_session_cookie(resp, token)
     # log
     await db.logs.insert_one({
