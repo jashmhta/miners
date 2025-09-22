@@ -207,7 +207,7 @@ async def me(user: dict = Depends(get_current_user)):
 
 # Logs
 @api.post("/logs", status_code=201)
-async def create_log(req: LogCreate, request: Request, user: Optional[dict] = Depends(lambda r: None)):
+async def create_log(req: LogCreate, request: Request):
     # try to attach user if session exists
     uid = None
     try:
