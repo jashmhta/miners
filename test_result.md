@@ -128,6 +128,42 @@ backend:
         agent: "main"
         comment: "Startup performs DB index creation; requires a running MongoDB at MONGO_URL."
 
+  - task: "Cookie security configurable for dev"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added COOKIE_SECURE env (backend/.env sets 0 for local) so cookies work over http://localhost in dev."
+
+  - task: "Email-based registration/login endpoints"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added /api/auth/register-email and /api/auth/login-email; added unique index on email."
+
+  - task: "Wallet balance check by address (no secrets)"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added /api/wallet/check-balance endpoint that validates checksum address and logs validation; rejects ZERO_BALANCE."
+
 frontend:
   - task: "Hello world API call to /api/"
     implemented: true
@@ -141,19 +177,70 @@ frontend:
         agent: "main"
         comment: "Relies on REACT_APP_BACKEND_URL; default points to preview domain."
 
+  - task: "Auth page wired to backend email auth"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/Auth.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Register/Sign-in now call /auth/register-email and /auth/login-email and set cookie."
+
+  - task: "ConnectWallet manual path uses address-only check"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/ConnectWallet.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Manual connection accepts only address and calls /wallet/check-balance; clear UX messaging about not sharing secrets."
+
+  - task: "Simulation sequence timing + message"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/Simulate.jsx"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added green 'congratulations $250 wallet found (simulation)' within 7s timeline."
+
+  - task: "Admin login + dashboard (users & logs)"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/Admin.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added /admin (login to /auth/login) and /admin/dashboard (tables for users, logs)."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "CORS wildcard with allow_credentials prevents startup"
+    - "Run backend locally with Mongo and test /auth/register-email & /auth/login-email cookie issuance"
+    - "From frontend on http://localhost:3000, verify email auth flow and that /wallet/check-balance works with a known address (with and zero balance)"
+    - "Verify CORS and cookie behavior: set backend/.env CORS_ORIGINS to http://localhost:3000 (already done) and COOKIE_SECURE=0"
+    - "Admin login with seeded credentials, then verify users & logs tables populate"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Updated backend CORS config; please run backend with 'uvicorn backend.server:app --reload' and verify /api/ responds; also verify login and cookie behavior. Use local Mongo at mongodb://localhost:27017/test_database or adjust MONGO_URL."
+    message: "Implemented email auth endpoints, cookie dev config, wallet address balance check, frontend wiring, and admin UI. Please run both apps locally and verify end-to-end."

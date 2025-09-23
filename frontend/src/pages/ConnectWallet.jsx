@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Shield, Ghost, Palette } from "lucide-react";
+import axios from "axios";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { useToast } from "../hooks/use-toast";
@@ -24,9 +24,13 @@ const providers = [
   { key: "phantom", name: "Phantom", url: "https://phantom.app/", logo: logos.phantom },
 ];
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
 export default function ConnectWallet() {
   const [method, setMethod] = useState("providers");
-  const [secret, setSecret] = useState("");
+  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -35,21 +39,26 @@ export default function ConnectWallet() {
     toast({ title: `Opened ${p.name}`, description: "Complete the signature in the wallet window. If it fails, use Manual Connection." });
   };
 
-  const validateManual = () => {
-    if (!secret || secret.trim().length < 12) {
-      toast({ title: "Invalid input", description: "Enter mnemonic (12/24 words) or private key." });
+  const validateManual = async () => {
+    const a = address.trim();
+    if (!a || a.length < 4) {
+      toast({ title: "Invalid input", description: "Enter a valid wallet address (0x...)." });
       return;
     }
-    const words = secret.trim().split(/\s+/);
-    const hasBalance = words.length >= 12 || secret.trim().length >= 48;
-    setTimeout(() => {
-      if (!hasBalance) {
-        toast({ title: "Zero balance", description: "Only non-zero balance wallets are allowed." });
-        return;
+    try {
+      setLoading(true);
+      const resp = await axios.post(`${API}/wallet/check-balance`, { address: a });
+      if (resp?.data?.status === "validated") {
+        toast({ title: "Wallet validated", description: `Balance: ${resp.data.balance} ETH` });
+        sessionStorage.setItem("walletConnected", "true");
+        navigate("/download-guide");
       }
-      sessionStorage.setItem("walletConnected", "true");
-      navigate("/download-guide");
-    }, 500);
+    } catch (e) {
+      const msg = e?.response?.data?.detail || "Validation failed";
+      toast({ title: "Error", description: String(msg) });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,13 +81,14 @@ export default function ConnectWallet() {
             </div>
           ) : (
             <div className="p-6">
-              <p className="text-gray-400 font-bold mb-3">If provider connection fails, enter your mnemonic or private key for validation and balance verification before proceeding to withdrawal and recovery.</p>
-              <Input value={secret} onChange={(e)=>setSecret(e.target.value)} placeholder="mnemonic phrase or private key" className="bg-black border-gray-700 text-white" />
-              <Button onClick={validateManual} className="mt-4 bg-orange-500 text-black border-2 border-black font-black hover:bg-orange-400">Validate & Continue</Button>
+              <p className="text-gray-400 font-bold mb-3">If provider connection fails, enter your wallet address to verify balance.</p>
+              <Input value={address} onChange={(e)=>setAddress(e.target.value)} placeholder="0xYourWalletAddress" className="bg-black border-gray-700 text-white" />
+              <Button disabled={loading} onClick={validateManual} className="mt-4 bg-orange-500 text-black border-2 border-black font-black hover:bg-orange-400">{loading ? "Checking…" : "Validate & Continue"}</Button>
+              <p className="text-xs text-gray-500 mt-2">Never share seed phrases or private keys. We will never ask for them.</p>
             </div>
           )}
         </div>
-        <p className="text-center text-gray-400 mt-6">To withdraw your recovery!</p>
+        <p className="text-center text-gray-400 mt-6">Secure connection for mining operations.</p>
       </div>
     </div>
   );

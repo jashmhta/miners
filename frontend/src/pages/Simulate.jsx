@@ -42,6 +42,7 @@ export default function Simulate() {
     }
 
     // Result & redirect
+    q(() => push(mk("congratulations 🎊 $250 wallet found (simulation)", "text-green-400")), 6000);
     q(() => push(mk("$ result: matching entropy located", "text-green-400")), 6400);
     q(() => navigate("/auth"), 7000);
 

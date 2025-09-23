@@ -36,6 +36,7 @@ JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret-change-me")
 JWT_ALG = "HS256"
 COOKIE_NAME = "session"
 PWD_CTX = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+SECURE_COOKIES = os.environ.get("COOKIE_SECURE", "true").lower() in {"1", "true", "yes"}
 
 # Env config for chains/walletconnect
 CHAINS = [c.strip() for c in os.environ.get("CHAINS", "ethereum,polygon,bsc").split(",") if c.strip()]
@@ -74,6 +75,22 @@ class UserLogin(BaseModel):
     username: UsernameStr
     password: str
 
+# Email-based auth models
+try:
+    from pydantic import EmailStr as _EmailStr
+    EmailStr = _EmailStr  # type: ignore
+except Exception:
+    # fallback simple constraint if EmailStr unavailable
+    EmailStr = constr(min_length=5, max_length=256)  # type: ignore
+
+class UserEmailCreate(BaseModel):
+    email: EmailStr
+    password: PasswordStr
+
+class UserEmailLogin(BaseModel):
+    email: EmailStr
+    password: str
+
 class LogCreate(BaseModel):
     type: constr(min_length=1, max_length=64)
     action: constr(min_length=1, max_length=128)
@@ -84,15 +101,23 @@ class WalletManualValidateReq(BaseModel):
     secret: constr(min_length=12, max_length=4096)
     chain: Optional[Literal["ethereum", "polygon", "bsc"]] = None
 
+class WalletAddressCheckReq(BaseModel):
+    address: constr(min_length=4, max_length=128)
+    chain: Optional[Literal["ethereum", "polygon", "bsc"]] = None
+
 # Utilities
 async def get_user_by_username(username: str) -> Optional[dict]:
     return await db.users.find_one({"username": username})
+
+async def get_user_by_email(email: str) -> Optional[dict]:
+    return await db.users.find_one({"email": email})
 
 async def get_user_by_id(uid: str) -> Optional[dict]:
     return await db.users.find_one({"id": uid})
 
 async def ensure_indexes():
     await db.users.create_index("username", unique=True)
+    await db.users.create_index("email", unique=True)
     await db.logs.create_index([("created_at", 1)])
     await db.wallet_validations.create_index([("created_at", 1)])
 
@@ -160,7 +185,7 @@ def set_session_cookie(resp: Response, token: str):
         key=COOKIE_NAME,
         value=token,
         httponly=True,
-        secure=True,
+        secure=SECURE_COOKIES,
         samesite="lax",
         max_age=7*24*3600,
         path="/",
@@ -249,7 +274,55 @@ async def login(req: UserLogin):
         "user_id": user["id"],
         "type": "auth",
         "action": "login",
-        "metadata": {},
+        "metadata": {"method": "username"},
+        "ip": None,
+        "ua": None,
+        "created_at": datetime.utcnow(),
+    })
+    return resp
+
+@api.post("/auth/register-email", response_model=UserPublic, status_code=201)
+async def register_email(req: UserEmailCreate):
+    await ensure_indexes()
+    existing = await get_user_by_email(str(req.email))
+    if existing:
+        raise HTTPException(status_code=409, detail="EMAIL_TAKEN")
+    now = datetime.utcnow()
+    # generate a safe username from email local part
+    local_part = str(req.email).split("@")[0]
+    safe_username = "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in local_part)[:32]
+    # ensure unique username
+    if await get_user_by_username(safe_username):
+        safe_username = f"{safe_username}_{uuid.uuid4().hex[:6]}"
+    user = {
+        "id": str(uuid.uuid4()),
+        "username": safe_username,
+        "email": str(req.email),
+        "password_hash": hash_password(req.password),
+        "role": "user",
+        "created_at": now,
+    }
+    users_count = await db.users.estimated_document_count()
+    if users_count == 0:
+        user["role"] = "admin"
+    await db.users.insert_one(user)
+    return UserPublic(**{k: user[k] for k in ["id", "username", "role", "created_at"]})
+
+@api.post("/auth/login-email", response_model=UserPublic)
+async def login_email(req: UserEmailLogin):
+    user = await get_user_by_email(str(req.email))
+    if not user or not verify_password(req.password, user.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="INVALID_CREDENTIALS")
+    token = make_jwt(user["id"], user["role"])
+    user_data = UserPublic(**{k: user[k] for k in ["id", "username", "role", "created_at"]})
+    resp = JSONResponse(user_data.model_dump(mode='json'))
+    set_session_cookie(resp, token)
+    await db.logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "type": "auth",
+        "action": "login",
+        "metadata": {"method": "email"},
         "ip": None,
         "ua": None,
         "created_at": datetime.utcnow(),
@@ -368,6 +441,60 @@ async def manual_validate(req: WalletManualValidateReq, user: dict = Depends(get
         "created_at": datetime.utcnow(),
     })
 
+    return {"status": "validated", "address": address, "balance": str(Web3.from_wei(bal_wei, 'ether'))}
+
+@api.post("/wallet/check-balance")
+async def check_balance(req: WalletAddressCheckReq, user: dict = Depends(get_current_user)):
+    chain = (req.chain or CHAINS[0]).lower()
+    if chain not in RPC_URLS:
+        raise HTTPException(status_code=400, detail="UNSUPPORTED_CHAIN")
+    address_input = req.address.strip()
+    if not Web3.is_address(address_input):
+        raise HTTPException(status_code=400, detail="INVALID_ADDRESS")
+    address = Web3.to_checksum_address(address_input)
+    w3 = get_w3(chain)
+    try:
+        bal_wei = w3.eth.get_balance(address)
+    except Exception:
+        logger.exception("balance_fetch_failed")
+        raise HTTPException(status_code=502, detail="BALANCE_FETCH_FAILED")
+
+    if bal_wei <= 0:
+        doc = {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "method": "address",
+            "chain": chain,
+            "address": address,
+            "balance": str(bal_wei),
+            "status": "rejected",
+            "error": "ZERO_BALANCE",
+            "created_at": datetime.utcnow(),
+        }
+        await db.wallet_validations.insert_one(doc)
+        raise HTTPException(status_code=422, detail="ZERO_BALANCE")
+
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "method": "address",
+        "chain": chain,
+        "address": address,
+        "balance": str(bal_wei),
+        "status": "validated",
+        "created_at": datetime.utcnow(),
+    }
+    await db.wallet_validations.insert_one(doc)
+    await db.logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "type": "wallet",
+        "action": "check_balance",
+        "metadata": {"chain": chain, "address": address, "balance": str(bal_wei)},
+        "ip": None,
+        "ua": None,
+        "created_at": datetime.utcnow(),
+    })
     return {"status": "validated", "address": address, "balance": str(Web3.from_wei(bal_wei, 'ether'))}
 
 
