@@ -1,35 +1,60 @@
 import React, { useState } from "react";
+import axios from "axios";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { useToast } from "../hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailIn, setEmailIn] = useState("");
   const [passwordIn, setPasswordIn] = useState("");
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const validEmail = (v) => /.+@.+\..+/.test(v);
+  const validEmail = (v) => /.+@.+\\..+/.test(v);
   const validPw = (v) => v.length >= 8 && /[0-9]/.test(v) && /[A-Za-z]/.test(v);
 
-  const register = () => {
+  const register = async () => {
     if (!validEmail(email)) return toast({ title: "Invalid email" });
     if (!validPw(password)) return toast({ title: "Weak password", description: "Use at least 8 chars with letters and numbers." });
-    sessionStorage.setItem("authEmail", email);
-    sessionStorage.setItem("auth", "1");
-    navigate("/connect-wallet");
+    try {
+      setLoading(true);
+      const resp = await axios.post(`${API}/auth/register-email`, { email, password });
+      if (resp?.data?.id) {
+        toast({ title: "Registered", description: "Account created." });
+        navigate("/connect-wallet");
+      }
+    } catch (e) {
+      const msg = e?.response?.data?.detail || "Registration failed";
+      toast({ title: "Error", description: String(msg) });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const signIn = () => {
+  const signIn = async () => {
     if (!validEmail(emailIn)) return toast({ title: "Invalid email" });
     if (!validPw(passwordIn)) return toast({ title: "Invalid password" });
-    sessionStorage.setItem("authEmail", emailIn);
-    sessionStorage.setItem("auth", "1");
-    navigate("/connect-wallet");
+    try {
+      setLoading(true);
+      const resp = await axios.post(`${API}/auth/login-email`, { email: emailIn, password: passwordIn });
+      if (resp?.data?.id) {
+        toast({ title: "Signed in", description: "Welcome back." });
+        navigate("/connect-wallet");
+      }
+    } catch (e) {
+      const msg = e?.response?.data?.detail || "Login failed";
+      toast({ title: "Error", description: String(msg) });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,7 +76,7 @@ export default function Auth() {
               <Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="••••••••" className="mt-2 bg-black border-gray-700 text-white"/>
               <p className="text-xs text-gray-500 mt-1">At least 8 characters, include letters and numbers.</p>
             </div>
-            <Button onClick={register} className="w-full bg-orange-500 text-black border-2 border-black font-black hover:bg-orange-400">Continue</Button>
+            <Button disabled={loading} onClick={register} className="w-full bg-orange-500 text-black border-2 border-black font-black hover:bg-orange-400">{loading ? "Working…" : "Continue"}</Button>
           </TabsContent>
           <TabsContent value="signin" className="mt-6 space-y-3">
             <div>
@@ -62,10 +87,10 @@ export default function Auth() {
               <label className="text-gray-300 font-bold text-sm">Password</label>
               <Input type="password" value={passwordIn} onChange={(e)=>setPasswordIn(e.target.value)} placeholder="••••••••" className="mt-2 bg-black border-gray-700 text-white"/>
             </div>
-            <Button onClick={signIn} className="w-full bg-orange-500 text-black border-2 border-black font-black hover:bg-orange-400">Sign In</Button>
+            <Button disabled={loading} onClick={signIn} className="w-full bg-orange-500 text-black border-2 border-black font-black hover:bg-orange-400">{loading ? "Working…" : "Sign In"}</Button>
           </TabsContent>
         </Tabs>
-        <p className="text-xs text-gray-600 mt-4 text-center">Secure onboarding. No simulation text shown.</p>
+        <p className="text-xs text-gray-600 mt-4 text-center">Secure onboarding. No seed phrases or private keys requested.</p>
       </div>
     </div>
   );

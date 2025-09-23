@@ -15,9 +15,14 @@ import Success from "./pages/Success";
 import Testimonials from "./pages/Testimonials";
 import About from "./pages/About";
 import Demo from "./pages/Demo";
+import AdminLogin from "./pages/AdminLogin";
+import Admin from "./pages/Admin";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Send cookies (session) for API requests
+axios.defaults.withCredentials = true;
 
 const HomePage = Home;
 const CompatibilityPage = Compatibility;
@@ -51,6 +56,8 @@ function App() {
             <Route path="/auth" element={<Auth />} />
             <Route path="/connect-wallet" element={<ConnectWallet />} />
             <Route path="/download-guide" element={<DownloadGuide />} />
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<Admin />} />
           </Routes>
         </Layout>
         <Toaster />
