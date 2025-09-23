@@ -101,3 +101,59 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+---
+user_problem_statement: "Run it and debug"
+backend:
+  - task: "CORS wildcard with allow_credentials prevents startup"
+    implemented: true
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Patched CORSMiddleware init to disable credentials when CORS_ORIGINS='*' to satisfy Starlette 0.37+ constraint."
+
+  - task: "MongoDB availability on startup (ensure_indexes)"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Startup performs DB index creation; requires a running MongoDB at MONGO_URL."
+
+frontend:
+  - task: "Hello world API call to /api/"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Relies on REACT_APP_BACKEND_URL; default points to preview domain."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "CORS wildcard with allow_credentials prevents startup"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Updated backend CORS config; please run backend with 'uvicorn backend.server:app --reload' and verify /api/ responds; also verify login and cookie behavior. Use local Mongo at mongodb://localhost:27017/test_database or adjust MONGO_URL."

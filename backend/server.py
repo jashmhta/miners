@@ -478,10 +478,17 @@ async def on_startup():
 
 # Mount router and CORS
 app.include_router(api)
+# Handle Starlette CORS constraint: cannot use allow_credentials with wildcard origins
+_cors_origins_env = os.environ.get('CORS_ORIGINS', '*')
+_cors_origins = [o.strip() for o in _cors_origins_env.split(',') if o.strip()]
+_allow_credentials = True
+if _cors_origins == ['*']:
+    _allow_credentials = False
+
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_credentials=_allow_credentials,
+    allow_origins=_cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
